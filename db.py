@@ -15,11 +15,11 @@ def get_salt():
 def get_hash(password, salt):
     b_pw = bytes(password, 'utf-8')
     b_salt = bytes(salt, 'utf-8')
-    hashed_password = hashlib.pbkdf2_hmac('sha256', b_pw, b_salt, 100000).hex()
+    hashed_password = hashlib.pbkdf2_hmac('sha256', b_pw, b_salt, 1246).hex()
     return hashed_password
 
 def insert_user(user_name, password):
-    sql = "INSERT INTO shop_user VALUES(default, %s, %s, %s)"
+    sql = 'INSERT INTO user_sample VALUES (default, %s, %s, %s)'
     salt = get_salt()
     hashed_password = get_hash(password, salt)
     
@@ -28,18 +28,36 @@ def insert_user(user_name, password):
         cursor = connection.cursor()
         
         cursor.execute(sql, (user_name, hashed_password, salt))
-        cursor = cursor.rowcount
+        count = cursor.rowcount # 更新内容を取得
         connection.commit()
     except psycopg2.DatabaseError :
         count = 0
     finally :
         cursor.close()
         connection.close()
+        
+    return count
+
+def insert_goods(goods_name, detail, price, stock):
+    sql = 'INSERT INTO goods VALUES (default, %s, %s, %s, %s)'
     
+    try :
+        connection = get_connection()
+        cursor = connection.cursor()
+        
+        cursor.execute(sql, (goods_name, detail, price, stock))
+        count = cursor.rowcount # 更新内容を取得
+        connection.commit()
+    except psycopg2.DatabaseError:
+        count = 0
+    finally:
+        cursor.close()
+        connection.close()
+        
     return count
 
 def login(user_name, password):
-    sql = 'SELECT hashed_password, salt FROM shop_user WHERE name = %s'
+    sql = 'SELECT hashed_password, salt FROM user_sample WHERE name = %s'
     flg = False
 
     try :
@@ -62,3 +80,66 @@ def login(user_name, password):
         connection.close()
     
     return flg
+
+def select_all_goods():
+    connection = get_connection()
+    cursor = connection.cursor()
+    sql = 'SELECT id, goods_name, detail, price, stock FROM goods'
+    
+    cursor.execute(sql)
+    rows = cursor.fetchall()
+    
+    cursor.close()
+    connection.close()
+    
+    return rows
+
+def delete_goods(id):
+    sql = 'DELETE FROM goods WHERE id = %s'
+    
+    try:
+        connection = get_connection()
+        cursor = connection.cursor()
+        
+        cursor.execute(sql, (id,))
+        count = cursor.rowcount
+        connection.commit()
+    except psycopg2.DatabaseError:
+        count = 0
+    finally:
+        cursor.close()
+        connection.close()
+        
+    return count
+
+def update_goods(id, name, detail, price, stock):
+    sql = 'UPDATE goods SET goods_name = %s, detail = %s, price = %s, stock = %s WHERE id = %s'
+    
+    try:
+        connection = get_connection()
+        cursor = connection.cursor()
+        
+        cursor.execute(sql, (name, detail, price, stock, id))
+        count = cursor.rowcount
+        connection.commit()
+    except psycopg2.DatabaseError:
+        count = 0
+    finally:
+        cursor.close()
+        connection.close()
+    
+    return count
+
+def search_goods(key):
+    connection = get_connection()
+    cursor = connection.cursor()
+    sql = 'SELECT id, name, detail, price, stock FROM goods WHERE name LIKE %s'
+    key = '%' + key + '%'
+    
+    cursor.execute(sql, (key,))
+    rows = cursor.fetchall()
+    
+    cursor.close()
+    connection.close()
+    
+    return rows

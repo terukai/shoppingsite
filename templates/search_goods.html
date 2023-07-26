@@ -1,0 +1,13 @@
+{% extends "mypage.html" %}
+
+{% block css %}
+<!-- なし -->
+{% endblock %}
+
+{% block content %}
+    <h3>検索したい商品の名前を入力してください</h3>
+    <form action="{{url_for('search_goods_exe')}}" method="post">
+        <input type="text" name="name">
+        <input type="submit" value="検索">
+    </form>
+{% endblock %}
